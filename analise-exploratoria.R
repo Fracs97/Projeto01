@@ -1,11 +1,12 @@
 library(data.table)
 library(dplyr)
-dados = fread(file='train_sample.csv')
+
+#As coluna ip  e attributed_time não são úteis
+#O número de observações no dataset teve de ser reduzido devido à limitações
+#de memória ram
+dados = fread(file='train.csv',nrows=50000000,drop=c('ip','attributed_time'))
 
 head(dados)
-
-#A coluna ip não é útil
-dados[,'ip'] = NULL
 
 #Verificando os tipos dos dados
 str(dados)
@@ -28,7 +29,8 @@ df_compara = function(agrupados,variavel){
   compara = cbind(df1,Freq_baixou=df2)
 }
 
-#Analisando cada variável, separando por classe
+#Analisando a proporção de cada variável, separando por classe
+
 #APP
 agrupados = tapply(dados$app,dados$is_attributed,function(x){
   round(prop.table(table(x))*100,3)})
