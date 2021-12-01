@@ -84,7 +84,7 @@ chisq.test(dados$channel,dados$is_attributed)
 #CLICK_TIME
 #Extraindo o dia do mês, mês, dia da semana e o horário
 dados %>% mutate(mes=month(click_time),dia=format(click_time,'%d'),dia_semana=weekdays(click_time)) %>% View()
-#Não posso considerar o mês e dia, pois só aparecem os dias 6 e 7 do mês 11, pois
+#Não posso considerar o mês e dia, pois só aparecem os dias 6 e 7 do mês 11, então
 #isso levaria a conclusões enviesadas
 
 unique(format(dados[c(1:20000000),'click_time'],'%m'))
