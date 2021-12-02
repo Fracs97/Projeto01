@@ -82,9 +82,29 @@ chisq.test(dados$channel,dados$is_attributed)
 #p-value <2.2e-16, ou seja, há indícios de associação entre as variáveis
 
 #CLICK_TIME
-#Extraindo o dia do mês, mês, dia da semana e o horário
-dados %>% mutate(mes=month(click_time),dia=format(click_time,'%d'),dia_semana=weekdays(click_time)) %>% View()
+unique(format(dados$click_time,'%d'))
+unique(format(dados$click_time,'%m'))
 #Não posso considerar o mês e dia, pois só aparecem os dias 6 e 7 do mês 11, então
 #isso levaria a conclusões enviesadas
 
-unique(format(dados[c(1:20000000),'click_time'],'%m'))
+#Extraindo o horário
+dados_time = dados %>% mutate(hora=format(click_time,'%H'),
+                              minuto=format(click_time,'%M')) %>%
+  mutate_at(c('minuto','hora'),as.integer)
+
+#HORA
+boxplot(dados_time$hora~dados_time$is_attributed,ylab='Hora do click',
+        main='Hora do click x Baixou ou não',col='gray')
+#As classes não são separáveis por hora do click
+
+#MINUTO
+boxplot(dados_time$minuto~dados_time$is_attributed,ylab='Minuto do click',
+main='Minuto do click x Baixou ou não',col='gray')
+#As classes não são separáveis por minuto do click
+
+#A conclusão com relação à coluna click_time é que ela não é útil no
+#estudo
+dados$click_time = NULL
+
+#Versão final, para 
+fwrite(dados,'dados_final.csv')
