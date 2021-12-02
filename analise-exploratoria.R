@@ -106,5 +106,5 @@ main='Minuto do click x Baixou ou não',col='gray')
 #estudo
 dados$click_time = NULL
 
-#Versão final, para 
+#Versão final, para a modelagem
 fwrite(dados,'dados_final.csv')
