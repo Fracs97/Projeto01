@@ -7,6 +7,7 @@ library(class)
 library(ROSE)
 library(rpart)
 
+set.seed(10)
 #DATA MUNGING
 dados = fread(file='dados_final.csv')
 
@@ -59,77 +60,17 @@ dim(treino);dim(teste)
 #baixou o app, mas na verdade não baixou) são mais relevantes que os Falsos negativos
 #Pois esse primeiro abre uma brecha para as fraudes
 
-#rpart
-modelo_rpart = rpart(is_attributed~.,data=treino)
-previsoes_rpart = predict(modelo_rpart,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_rpart)[,1],teste$is_attributed)
-#0% de acurácia na classe Baixou e 100% na classe Não baixou
-
-#C5.0
 custo = matrix(c(0,5,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
                                                c('Baixou','Não baixou')))
+
 modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo)
 previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#82% acurácia na classe Baixou e 88% na classe Não baixou
+#81% acurácia na classe Baixou e 88% na classe Não baixou
 roc.curve(teste$is_attributed,as.data.frame(previsoes_C5.0)[,1])
-
-#Naive Bayes
-modelo_nb = naive_bayes(is_attributed~.,data=treino,laplace=1)
-previsoes_nb = predict(modelo_nb,teste[,-1])
-confusionMatrix(as.data.frame(previsoes_nb)[,1],teste$is_attributed)
-#52% acurácia na classe Baixou e 92% na classe Não baixou
-
-#KNN
-modelo_knn = knn(treino[,-1],teste[,-1],treino$is_attributed,k=3)
-confusionMatrix(modelo_knn,teste$is_attributed)
-#16% acurácia na classe Baixou e 97% na classe Não baixou
-
-#BALANCEAMENTO
-treino_b = ROSE(is_attributed~.,data=treino,p=0.4)$data
-prop.table(table(treino_b$is_attributed))
-
-#Treinando novamente, com os dados novos
-
-#rpart
-modelo_rpart = rpart(is_attributed~.,data=treino_b)
-previsoes_rpart = predict(modelo_rpart,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_rpart)[,1],teste$is_attributed)
-#74% de acurácia na classe Baixou e 88% na classe Não baixou
-#Balanceamento com p=0.3
-
-#C5.0
-modelo_C5.0 = C5.0(is_attributed~.,data=treino_b)
-previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#85% de acurácia na classe Baixou e 84% na classe Não baixou
-
-#Naive Bayes
-modelo_nb = naive_bayes(is_attributed~.,data=treino_b,laplace=1)
-previsoes_nb = predict(modelo_nb,teste[,-1])
-confusionMatrix(previsoes_nb,teste$is_attributed)
-#69% de acurácia na classe Baixou e 88% na classe Não baixou
-
-#KNN
-modelo_knn = knn(treino_b[,-1],teste[,-1],treino_b$is_attributed,k=3)
-confusionMatrix(modelo_knn,teste$is_attributed)
-#68% de acurácia na classe Baixou e 82% na classe Não baixou
+#AUC de 0.85
 
 #Balanceamento não melhorou o modelo
-
-#FEATURE SELECTION
-summary(modelo_C5.0)
-custo = matrix(c(0,5,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
-                                               c('Baixou','Não baixou')))
-modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo)
-previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-
-#Feature Selection não melhorou o modelo
-
-#TUNING
-modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo,trials=20)
-previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-
+#Feature selection não melhorou o modelo
+#O único parâmetro que gerou ganhos foi o costs
 
