@@ -6,19 +6,24 @@ library(naivebayes)
 library(class)
 library(ROSE)
 library(rpart)
-library(kernlab)
-library(randomForest)
 
 #DATA MUNGING
 dados = fread(file='dados_final.csv')
 
 str(dados)
 
-#Os inteiros são na verdade fatores
-dados = dados %>% mutate_if(is.integer,as.factor)
+#A coluna click_time não é mais necessária
+dados$click_time = NULL
 
-#Convertendo a classe em fator
-dados$is_attributed = as.factor(dados$is_attributed)
+#Ajustando o tipo das variáveis
+dados = dados %>% mutate_at(c('app','device','os','channel','is_attributed'),
+                            as.factor)
+
+modelo = C5.0(is_attributed~.,data=dados)
+C5imp(modelo)
+#Um modelo do C5.0 mostrou que a relevância da variável minuto é muito baixa,além
+#de deixar o modelo pouco generalizável
+dados$minuto = NULL
 
 #Verificando se há valores NA
 sapply(dados,function(x)sum(is.na(x)))
@@ -45,8 +50,8 @@ treino = dados[tt,]
 teste = dados[-tt,]
 
 #Trocando a posição da coluna classe pra facilitar na hora de chamar o predict
-teste = teste[,c('is_attributed','app','device','os','channel')]
-treino = treino[,c('is_attributed','app','device','os','channel')]
+teste = teste[,c('is_attributed','app','device','os','channel','hora')]
+treino = treino[,c('is_attributed','app','device','os','channel','hora')]
 
 dim(treino);dim(teste)
 
@@ -57,36 +62,31 @@ dim(treino);dim(teste)
 #rpart
 modelo_rpart = rpart(is_attributed~.,data=treino)
 previsoes_rpart = predict(modelo_rpart,teste[,-1],type='class')
-confusionMatrix(as.data.frame(previsoes_rpart)[,1],teste[,1])
-#98.4% de acurácia na classe Baixou e 1.9% na classe Não baixou
+confusionMatrix(as.data.frame(previsoes_rpart)[,1],teste$is_attributed)
+#0% de acurácia na classe Baixou e 100% na classe Não baixou
 
 #C5.0
-custo = matrix(c(0,3,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
+custo = matrix(c(0,5,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
                                                c('Baixou','Não baixou')))
-modelo_C5.0 = C5.0(is_attributed~.,data=treino,cost=custo)
+modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo)
 previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#79% acurácia na classe Baixou e 75.7% na classe Não baixou
+#82% acurácia na classe Baixou e 88% na classe Não baixou
 roc.curve(teste$is_attributed,as.data.frame(previsoes_C5.0)[,1])
 
 #Naive Bayes
 modelo_nb = naive_bayes(is_attributed~.,data=treino,laplace=1)
 previsoes_nb = predict(modelo_nb,teste[,-1])
 confusionMatrix(as.data.frame(previsoes_nb)[,1],teste$is_attributed)
-#47.5% acurácia na classe Baixou e 85.4% na classe Não baixou
-
-#SVM
-modelo_svm = ksvm(is_attributed~.,data=treino,type='C-svc',kernel='rbfdot',scaled=F)
-previsoes_svm = predict(modelo_svm,teste[,-1])
-confusionMatrix(previsoes_svm,teste$is_attributed)
+#52% acurácia na classe Baixou e 92% na classe Não baixou
 
 #KNN
 modelo_knn = knn(treino[,-1],teste[,-1],treino$is_attributed,k=3)
 confusionMatrix(modelo_knn,teste$is_attributed)
-#12.5% acurácia na classe Baixou e 91.6% na classe Não baixou
+#16% acurácia na classe Baixou e 97% na classe Não baixou
 
 #BALANCEAMENTO
-treino_b = ROSE(is_attributed~.,data=treino,p=0.3)$data
+treino_b = ROSE(is_attributed~.,data=treino,p=0.4)$data
 prop.table(table(treino_b$is_attributed))
 
 #Treinando novamente, com os dados novos
@@ -95,39 +95,41 @@ prop.table(table(treino_b$is_attributed))
 modelo_rpart = rpart(is_attributed~.,data=treino_b)
 previsoes_rpart = predict(modelo_rpart,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_rpart)[,1],teste$is_attributed)
-#82% de acurácia na classe Baixou e 71% na classe Não baixou
-#Balanceamento com p=0.5
+#74% de acurácia na classe Baixou e 88% na classe Não baixou
+#Balanceamento com p=0.3
 
 #C5.0
-custo = matrix(c(0,2.5,1.5,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
-                                               c('Baixou','Não baixou')))
-modelo_C5.0 = C5.0(is_attributed~.,data=treino_b,cost=custo)
+modelo_C5.0 = C5.0(is_attributed~.,data=treino_b)
 previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#73.5% de acurácia na classe Baixou e 78% na classe Não baixou
+#85% de acurácia na classe Baixou e 84% na classe Não baixou
 
 #Naive Bayes
 modelo_nb = naive_bayes(is_attributed~.,data=treino_b,laplace=1)
 previsoes_nb = predict(modelo_nb,teste[,-1])
 confusionMatrix(previsoes_nb,teste$is_attributed)
-#67.9% de acurácia na classe Baixou e 77.9
-
+#69% de acurácia na classe Baixou e 88% na classe Não baixou
 
 #KNN
 modelo_knn = knn(treino_b[,-1],teste[,-1],treino_b$is_attributed,k=3)
 confusionMatrix(modelo_knn,teste$is_attributed)
-#74.8% de acurácia na classe Baixou e 62.9% na classe Não baixou
+#68% de acurácia na classe Baixou e 82% na classe Não baixou
+
+#Balanceamento não melhorou o modelo
 
 #FEATURE SELECTION
 summary(modelo_C5.0)
-custo = matrix(c(0,3,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
+custo = matrix(c(0,5,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
                                                c('Baixou','Não baixou')))
-modelo_C5.0 = C5.0(is_attributed~app+os+channel+device,data=treino,cost=custo)
+modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo)
 previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#79% acurácia na classe Baixou e 75.7% na classe Não baixou
-roc.curve(teste$is_attributed,as.data.frame(previsoes_C5.0)[,1])
 
-horas = fread(file='horas.csv')
-dados = cbind(dados,horas)
+#Feature Selection não melhorou o modelo
+
+#TUNING
+modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo,trials=20)
+previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
+confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
+
 
