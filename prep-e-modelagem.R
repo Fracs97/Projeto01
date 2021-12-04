@@ -20,10 +20,8 @@ dados$click_time = NULL
 dados = dados %>% mutate_at(c('app','device','os','channel','is_attributed'),
                             as.factor)
 
-modelo = C5.0(is_attributed~.,data=dados)
-C5imp(modelo)
-#Um modelo do C5.0 mostrou que a relevância da variável minuto é muito baixa,além
-#de deixar o modelo pouco generalizável
+dados = dados %>% mutate(minuto_q=cut(minuto,6,ordered_result=T))
+#Quantizando a variável minuto
 dados$minuto = NULL
 
 #Verificando se há valores NA
@@ -60,17 +58,16 @@ dim(treino);dim(teste)
 #baixou o app, mas na verdade não baixou) são mais relevantes que os Falsos negativos
 #Pois esse primeiro abre uma brecha para as fraudes
 
-custo = matrix(c(0,5,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
+custo = matrix(c(0,20,1,0),nr=2,dimnames = list(c('Baixou','Não baixou'),
                                                c('Baixou','Não baixou')))
 
 modelo_C5.0 = C5.0(is_attributed~.,data=treino,costs=custo)
 previsoes_C5.0 = predict(modelo_C5.0,teste[,-1],type='class')
 confusionMatrix(as.data.frame(previsoes_C5.0)[,1],teste$is_attributed)
-#81% acurácia na classe Baixou e 88% na classe Não baixou
+#83.7% acurácia na classe Baixou e 96.5% na classe Não baixou
 roc.curve(teste$is_attributed,as.data.frame(previsoes_C5.0)[,1])
-#AUC de 0.85
+#AUC de 0.902
 
 #Balanceamento não melhorou o modelo
 #Feature selection não melhorou o modelo
 #O único parâmetro que gerou ganhos foi o costs
-
