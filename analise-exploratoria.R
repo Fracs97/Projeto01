@@ -102,9 +102,8 @@ boxplot(dados_time$minuto~dados_time$is_attributed,ylab='Minuto do click',
 main='Minuto do click x Baixou ou não',col='gray')
 #As classes não são separáveis por minuto do click
 
-#A conclusão com relação à coluna click_time é que ela não é útil no
-#estudo
-dados$click_time = NULL
+#A conclusão com relação à coluna click_time é que ela por si só não separa os
+#dados
 
 #Versão final, para a modelagem
-fwrite(dados,'dados_final.csv')
+fwrite(dados_time,'dados_final.csv')
