@@ -1,6 +1,6 @@
 # Descrição
 Este projeto consiste em um modelo de classificação que prevê se um clique em um anúncio em um celular resultará ou não no download do aplicativo que está sendo anunciado. Os dados de treinamento tem como fonte o TalkingData.
 
-Base de dados pré análise exploratória: https://drive.google.com/file/d/1Eb8ZmFOY_P0sM5afPEWHUqePVNZChCSd/view?usp=sharing 
+Base de dados pré análise exploratória: https://mega.nz/file/htUxRbzK#XGL6IQXOI8WfHEqbHMo1-cmBMaOIGYLkVh5EDMijhuc
 
-Pós análise exploratória: https://drive.google.com/file/d/1t0ytbToSxv2ROhHuRmCMy0fOKFx-UjKg/view?usp=sharing
+Pós análise exploratória: https://mega.nz/file/9lESzahC#k9emtsrneMTrASJ1Cje31DsmvQH3Ycy2qwhKgdY0PwA
